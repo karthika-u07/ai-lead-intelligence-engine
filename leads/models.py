@@ -14,7 +14,7 @@ class Lead(models.Model):
     name = models.CharField(max_length=100)
     company = models.CharField(max_length=200)
     email = models.EmailField(unique=True)
-
+    idempotency_key = models.CharField(max_length=255, unique=True, null=True, blank=True)
     linkedin_url = models.URLField(null=True, blank=True)
 
     company_summary = models.TextField(null=True, blank=True)

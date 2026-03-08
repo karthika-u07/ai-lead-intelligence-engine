@@ -84,7 +84,7 @@ def enrich_lead_task(self, lead_id):
     email_text = completion.choices[0].message.content
 
     lead.generated_email = email_text
-    lead.status = "COMPLETED"
+    lead.status = "EMAIL_SENT"
     lead.save()
     send_mail(
         subject=f"AI Lead Intelligence Report – {lead.name}",
