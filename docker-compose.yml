@@ -1,0 +1,45 @@
+
+
+services:
+
+  web:
+    build: .
+    command: gunicorn ai_lead_enrichment.wsgi:application --bind 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - redis
+
+  worker:
+    build: .
+    command: celery -A ai_lead_enrichment worker -l info
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - db
+
+  redis:
+    image: redis:7
+
+  db:
+    image: mysql:8
+    environment:
+      MYSQL_DATABASE: ai_leads_db
+      MYSQL_ROOT_PASSWORD: Laptop@123
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+
+volumes:
+  mysql_data:
+

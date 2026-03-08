@@ -1,0 +1,13 @@
+Django
+djangorestframework
+PyMySQL
+celery
+redis
+django-celery-results
+python-dotenv
+gunicorn
+tavily-python
+groq
+cryptography
+whitenoise
+djangorestframework-simplejwt

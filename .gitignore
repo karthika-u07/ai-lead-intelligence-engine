@@ -11,5 +11,7 @@ __pycache__/
 
 # Environment variables
 .env
-
+# static build files
+staticfiles/
+gunicorn.ctl
 
