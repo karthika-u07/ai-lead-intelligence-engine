@@ -6,8 +6,13 @@ from django.db import transaction
 from .tasks import enrich_lead_task
 from .models import Lead
 from .serializers import LeadSerializer
+from django.http import HttpResponse
 
+
+def home(request):
+    return HttpResponse("AI Lead Intelligence Engine running on AWS 🚀 CI/CD working")
 class LeadCreateAPIView(APIView):
+
 
     permission_classes = [IsAuthenticated]
 
