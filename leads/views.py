@@ -7,7 +7,7 @@ from .tasks import enrich_lead_task
 from .models import Lead
 from .serializers import LeadSerializer
 from django.http import HttpResponse
-
+from rest_framework.generics import RetrieveAPIView, ListAPIView
 
 def home(request):
     return HttpResponse("AI Lead Intelligence Engine running on AWS 🚀 CI/CD working")
@@ -50,3 +50,13 @@ class LeadCreateAPIView(APIView):
             )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+class LeadDetailAPIView(RetrieveAPIView):
+    queryset = Lead.objects.all()
+    serializer_class = LeadSerializer
+    permission_classes = [IsAuthenticated]
+
+        #  GET ALL LEADS
+class LeadListAPIView(ListAPIView):
+    queryset = Lead.objects.all().order_by("-id")
+    serializer_class = LeadSerializer
+    permission_classes = [IsAuthenticated]

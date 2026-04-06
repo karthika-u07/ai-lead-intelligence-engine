@@ -11,3 +11,5 @@ groq
 cryptography
 whitenoise
 djangorestframework-simplejwt
+django-storages
+boto3
