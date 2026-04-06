@@ -8,7 +8,7 @@ from .models import Lead
 from .serializers import LeadSerializer
 from django.http import HttpResponse
 from rest_framework.generics import RetrieveAPIView, ListAPIView
-
+from rest_framework.permissions import AllowAny
 def home(request):
     return HttpResponse("AI Lead Intelligence Engine running on AWS 🚀 CI/CD working")
 class LeadCreateAPIView(APIView):
@@ -59,4 +59,4 @@ class LeadDetailAPIView(RetrieveAPIView):
 class LeadListAPIView(ListAPIView):
     queryset = Lead.objects.all().order_by("-id")
     serializer_class = LeadSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
