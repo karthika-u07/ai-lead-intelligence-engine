@@ -591,7 +591,7 @@ ai-lead-intelligence-engine/
 ## 📧 Contact
 
 **Karthika U**
-- LinkedIn: [karthika-u-40464722a](https://www.linkedin.com/in/karthika-u-40464722a/)
+- LinkedIn: [karthika-u07](https://www.linkedin.com/in/karthika-u07/)
 - GitHub: [karthika-u07](https://github.com/karthika-u07)
 
 ---
