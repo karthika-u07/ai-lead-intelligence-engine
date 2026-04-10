@@ -1,7 +1,5 @@
 version: '3.9'
-
 services:
-
   web:
     build: .
     command: gunicorn ai_lead_enrichment.wsgi:application --bind 0.0.0.0:8000
@@ -9,6 +7,7 @@ services:
       - .:/app
     ports:
       - "8000:8000"
+    restart: always
     env_file:
       - .env
     depends_on:
@@ -19,6 +18,7 @@ services:
     image: nginx:latest
     ports:
       - "80:80"
+    restart: always
     volumes:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
       - ./staticfiles:/app/staticfiles
@@ -35,9 +35,9 @@ services:
     depends_on:
       - redis
       - db
-
   redis:
     image: redis:7
+    restart: always
 
   db:
     image: mysql:8
@@ -48,7 +48,7 @@ services:
       - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-
+    restart:  always
 
 volumes:
   mysql_data:
