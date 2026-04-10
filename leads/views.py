@@ -48,8 +48,8 @@ class LeadCreateAPIView(APIView):
                 LeadSerializer(lead).data,
                 status=status.HTTP_201_CREATED
             )
-
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 class LeadDetailAPIView(RetrieveAPIView):
     queryset = Lead.objects.all()
     serializer_class = LeadSerializer
