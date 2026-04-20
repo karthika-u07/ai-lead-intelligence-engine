@@ -16,7 +16,6 @@ class Lead(models.Model):
     email = models.EmailField(unique=True)
     idempotency_key = models.CharField(max_length=255, unique=True, null=True, blank=True)
     linkedin_url = models.URLField(null=True, blank=True)
-
     company_summary = models.TextField(null=True, blank=True)
     generated_email = models.TextField(null=True, blank=True)
 

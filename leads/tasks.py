@@ -1,97 +1,167 @@
+import logging
 from celery import shared_task
 from django.conf import settings
+from django.core.mail import send_mail
+
 from .models import Lead
 from tavily import TavilyClient
 from groq import Groq
-from django.core.mail import send_mail
+
+logger = logging.getLogger(__name__)
 
 
 @shared_task(bind=True, autoretry_for=(Exception,), retry_kwargs={"max_retries": 3, "countdown": 5})
 def enrich_lead_task(self, lead_id):
-    lead = Lead.objects.get(id=lead_id)
 
-    # ---------- Tavily Enrichment ----------
-    tavily = TavilyClient(api_key=settings.TAVILY_API_KEY)
+    # ---------- GET LEAD ----------
+    try:
+        lead = Lead.objects.get(id=lead_id)
+    except Lead.DoesNotExist:
+        logger.error(f"Lead {lead_id} not found")
+        return False
 
-    # Phase 1 — Person identity (STRICT LinkedIn)
-    person_result = tavily.search(
-        query=f'site:linkedin.com/in "{lead.linkedin_url}" "{lead.name}"',
-        max_results=5
-    )
+    # ---------- STATUS: START ----------
+    lead.status = "ENRICHING"
+    lead.save()
 
-    # Phase 2 — Personal GitHub / portfolio (optional but powerful)
-    portfolio_result = tavily.search(
-        query=f'"{lead.name}" github OR portfolio',
-        max_results=3
-    )
+    # ---------- TAVILY ----------
+    try:
+        tavily = TavilyClient(api_key=settings.TAVILY_API_KEY)
 
-    # Phase 3 — Company info
-    company_result = tavily.search(
-        query=f'{lead.company} official website recent news',
-        max_results=3
-    )
+        # Person search (better context)
+        person_result = tavily.search(
+            query=f'"{lead.name}" {lead.company} LinkedIn profile',
+            max_results=5
+        )
 
-    summary = ""
+        # Portfolio
+        portfolio_result = tavily.search(
+            query=f'"{lead.name}" github OR portfolio',
+            max_results=3
+        )
 
-    def relevant_person(text):
-        return lead.name.lower() in text.lower() or "linkedin" in text.lower()
+        # Company
+        company_result = tavily.search(
+            query=f'{lead.company} recent news OR product OR technology',
+            max_results=3
+        )
 
-    # PERSON FIRST
-    for r in person_result["results"] + portfolio_result["results"]:
-        if relevant_person(r["content"]):
-            summary += r["content"] + "\n"
+    except Exception:
+        logger.error("Tavily failed", exc_info=True)
+        lead.status = "FAILED"
+        lead.save()
+        return False
 
-    # COMPANY SECOND (only appended)
-    for r in company_result["results"]:
-        summary += r["content"] + "\n"
+    # ---------- FILTER ----------
+    def is_relevant(text):
+        text = text.lower()
+        return (
+            lead.name.lower() in text and
+            lead.company.lower() in text
+        )
+
+    summary_parts = []
+
+    # Person + Portfolio
+    for r in person_result.get("results", []) + portfolio_result.get("results", []):
+        content = r.get("content", "")
+        if is_relevant(content):
+            summary_parts.append(content)
+
+    # ---------- FALLBACK ----------
+    if not summary_parts:
+        logger.warning(f"Fallback to company data for lead {lead.id}")
+        for r in company_result.get("results", []):
+            summary_parts.append(r.get("content", ""))
+
+    summary = "\n".join(summary_parts[:10])
+
+    # ---------- EMPTY CHECK ----------
+    if not summary:
+        logger.error(f"No data found for lead {lead.id}")
+        lead.status = "FAILED"
+        lead.save()
+        return False
 
     lead.company_summary = summary
     lead.status = "ENRICHED"
     lead.save()
 
-    # ---------- Groq Email Generation ----------
-    client = Groq(api_key=settings.GROQ_API_KEY)
+    # ---------- GROQ ----------
+    try:
+        client = Groq(api_key=settings.GROQ_API_KEY)
 
-    prompt = f"""
-    You are an AI research analyst.
+        prompt = f"""
+You are an AI research analyst.
 
-    Using the web data below, build a professional intelligence report.
+Generate a structured professional report.
 
-    DATA:
-    {summary}
+Lead:
+Name: {lead.name}
+Company: {lead.company}
 
-    Generate:
+Rules:
+- Use ONLY relevant information
+- Ignore unrelated people
+- Be concise and professional
 
-    1. Person Overview
-    2. Current Role
-    3. Key Skills / Background
-    4. Projects or Achievements
-    5. Company Information
-    6. Recent News or Initiatives
+DATA:
+{summary}
 
-    Format clean bullet points.
+Output:
+- Person Overview
+- Role
+- Skills
+- Achievements
+- Company Info
+- Recent News
 
-    Then give a short summary paragraph.
-    """
+Then a short summary paragraph.
+"""
 
-    completion = client.chat.completions.create(
-        model="llama-3.1-8b-instant",
-        messages=[
-            {"role": "user", "content": prompt}
-        ]
-    )
+        completion = client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=[{"role": "user", "content": prompt}]
+        )
 
-    email_text = completion.choices[0].message.content
+        email_text = completion.choices[0].message.content
+
+    except Exception:
+        logger.error("Groq failed", exc_info=True)
+        lead.status = "FAILED"
+        lead.save()
+        return False
+
+    # ---------- VALIDATION ----------
+    if lead.name.lower() not in email_text.lower():
+        logger.warning(f"Invalid output for lead {lead.id}")
+        lead.status = "FAILED"
+        lead.save()
+        return False
 
     lead.generated_email = email_text
-    lead.status = "EMAIL_SENT"
+
+    # ---------- EMAIL ----------
+    try:
+        send_mail(
+            subject=f"AI Lead Intelligence Report – {lead.name}",
+            message=email_text,
+            from_email=settings.EMAIL_HOST_USER,
+            recipient_list=["projectdjangoacc01@gmail.com"],
+            fail_silently=False,
+        )
+
+        lead.status = "EMAIL_SENT"
+
+    except Exception:
+        logger.error("Email failed", exc_info=True)
+        lead.status = "FAILED"
+        lead.save()
+        return False
+
+    # ---------- FINAL SAVE ----------
     lead.save()
-    send_mail(
-        subject=f"AI Lead Intelligence Report – {lead.name}",
-        message=email_text,
-        from_email=settings.EMAIL_HOST_USER,
-        recipient_list=["projectdjangoacc01@gmail.com"],
-        fail_silently=False,
-    )
+
+    logger.info(f"Lead {lead.id} processed successfully")
 
     return True

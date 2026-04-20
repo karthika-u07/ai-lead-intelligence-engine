@@ -35,6 +35,7 @@ services:
     depends_on:
       - redis
       - db
+    restart: always
   redis:
     image: redis:7
     restart: always
@@ -43,7 +44,7 @@ services:
     image: mysql:8
     environment:
       MYSQL_DATABASE: ai_leads_db
-      MYSQL_ROOT_PASSWORD: Laptop@123
+      MYSQL_ROOT_PASSWORD: "Laptop@123"
     ports:
       - "3307:3306"
     volumes:
