@@ -13,3 +13,6 @@ whitenoise
 djangorestframework-simplejwt
 django-storages
 boto3
+pytest
+pytest-django
+pytest-cov
