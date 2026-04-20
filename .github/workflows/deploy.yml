@@ -11,19 +11,13 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
-    services:
-      mysql:
-        image: mysql:8
-        env:
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: test_db
-        ports:
-          - 3306:3306
-
-      redis:
-        image: redis:7
-        ports:
-          - 6379:6379
+    env:
+      DJANGO_SETTINGS_MODULE: ai_lead_enrichment.settings
+      CI: true
+      TAVILY_API_KEY: test
+      GROQ_API_KEY: test
+      EMAIL_HOST_USER: test@test.com
+      REPORT_RECIPIENT: test@test.com
 
     steps:
       - name: Checkout Code
@@ -38,9 +32,6 @@ jobs:
         run: |
           pip install -r requirements.txt
 
-      - name: Wait for services
-        run: sleep 10
-
       - name: Run Migrations
         run: |
           python manage.py migrate
@@ -48,7 +39,6 @@ jobs:
       - name: Run Tests
         run: |
           pytest --cov=leads
-
 
   # ---------------- CD JOB ---------------- #
   deploy:

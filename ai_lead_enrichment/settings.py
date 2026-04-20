@@ -13,6 +13,13 @@ from dotenv import load_dotenv
 import os
 from datetime import timedelta
 
+if os.environ.get("CI"):
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": ":memory:",
+        }
+    }
 load_dotenv()
 
 
