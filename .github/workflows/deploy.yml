@@ -12,8 +12,8 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
+      CI: "true"
       DJANGO_SETTINGS_MODULE: ai_lead_enrichment.settings
-      CI: true
       TAVILY_API_KEY: test
       GROQ_API_KEY: test
       EMAIL_HOST_USER: test@test.com

@@ -13,7 +13,10 @@ from dotenv import load_dotenv
 import os
 from datetime import timedelta
 
-if os.environ.get("CI"):
+load_dotenv()
+IS_CI = os.environ.get("CI") == "true"
+# DATABASE
+if IS_CI:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
@@ -25,14 +28,20 @@ else:
         "default": {
             "ENGINE": "django.db.backends.mysql",
             "NAME": os.getenv("MYSQL_DATABASE"),
-            "USER": os.getenv("MYSQL_USER"),
+            "USER": os.getenv("MYSQL_USER", "root"),
             "PASSWORD": os.getenv("MYSQL_ROOT_PASSWORD"),
-            "HOST": os.getenv("MYSQL_HOST"),
+            "HOST": os.getenv("MYSQL_HOST", "localhost"),
             "PORT": os.getenv("MYSQL_PORT", "3306"),
         }
     }
-load_dotenv()
+# EMAIL
+if IS_CI:
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+else:
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 
+# CELERY
+CELERY_TASK_ALWAYS_EAGER = IS_CI
 
 from pathlib import Path
 
@@ -101,23 +110,11 @@ WSGI_APPLICATION = 'ai_lead_enrichment.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.mysql",
-        "NAME": os.getenv("MYSQL_DATABASE"),
-        "USER": os.getenv("MYSQL_USER"),
-        "PASSWORD": os.getenv("MYSQL_ROOT_PASSWORD"),
-        "HOST": os.getenv("MYSQL_HOST"),
-        "PORT": os.getenv("MYSQL_PORT", "3306"),
-    }
-}
 
 CELERY_BROKER_URL = "redis://redis:6379/0"
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_BACKEND = 'django-db'
-CELERY_TASK_ALWAYS_EAGER = True
-CELERY_TASK_EAGER_PROPAGATES = True
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
@@ -176,9 +173,6 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
-
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
