@@ -3,6 +3,7 @@ djangorestframework
 PyMySQL
 celery
 redis
+django-redis
 django-celery-results
 python-dotenv
 gunicorn

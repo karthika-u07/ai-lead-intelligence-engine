@@ -2,10 +2,10 @@ import logging
 from celery import shared_task
 from django.conf import settings
 from django.core.mail import send_mail
-
 from .models import Lead
 from tavily import TavilyClient
 from groq import Groq
+from django.core.cache import cache
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +19,21 @@ def enrich_lead_task(self, lead_id):
     except Lead.DoesNotExist:
         logger.error(f"Lead {lead_id} not found")
         return False
+
+    # ---------- CACHE CHECK ----------
+    cache_key = f"lead_enrichment:v1:{lead.email}:{lead.company}"
+
+    cached_data = cache.get(cache_key)
+
+    if cached_data:
+        logger.info(f"⚡ Cache hit for lead {lead.id}")
+
+        lead.generated_email = cached_data["email"]
+        lead.company_summary = cached_data["summary"]
+        lead.status = "EMAIL_SENT"
+        lead.save()
+
+        return True
 
     # ---------- STATUS: START ----------
     lead.status = "ENRICHING"
@@ -140,6 +155,12 @@ Then a short summary paragraph.
         return False
 
     lead.generated_email = email_text
+
+    # ---------- STORE IN CACHE ----------
+    cache.set(cache_key, {
+        "email": email_text,
+        "summary": summary
+    }, timeout=3600)
 
     # ---------- EMAIL ----------
     try:

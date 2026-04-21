@@ -30,7 +30,7 @@ else:
             "NAME": os.getenv("MYSQL_DATABASE"),
             "USER": os.getenv("MYSQL_USER", "root"),
             "PASSWORD": os.getenv("MYSQL_ROOT_PASSWORD"),
-            "HOST": os.getenv("MYSQL_HOST", "localhost"),
+            "HOST": os.getenv("MYSQL_HOST", "mysql"),
             "PORT": os.getenv("MYSQL_PORT", "3306"),
         }
     }
@@ -58,7 +58,7 @@ SECRET_KEY = os.getenv("DJANGO_SECRET_KEY","fallback-key-for-dev")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ["13.233.174.166", "localhost", "127.0.0.1"]
+ALLOWED_HOSTS = ["3.110.81.159", "localhost", "127.0.0.1"]
 
 
 # Application definition
@@ -115,7 +115,15 @@ CELERY_BROKER_URL = "redis://redis:6379/0"
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_BACKEND = 'django-db'
-
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://redis:6379/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
