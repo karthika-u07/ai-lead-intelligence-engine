@@ -29,8 +29,8 @@ The AI Lead Intelligence Engine is a **production-deployed, containerized** back
 ---
 ## 🌐 Live Deployment
 
-- API Base URL: http://13.233.174.166
-- Health Check: http://13.233.174.166/
+- API Base URL: http://3.110.81.159
+- Health Check: http://3.110.81.159/
 ### 🎯 Key Features
 
 - **JWT-Protected REST API** — Secure lead ingestion with stateless token-based auth
