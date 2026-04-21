@@ -40,8 +40,6 @@ if IS_CI:
 else:
     EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 
-# CELERY + CACHE (FINAL FIX)
-
 if IS_CI:
     CELERY_TASK_ALWAYS_EAGER = True
     CELERY_BROKER_URL = "memory://"
@@ -65,6 +63,7 @@ else:
             }
         }
     }
+
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
