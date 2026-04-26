@@ -23,7 +23,10 @@ def enrich_lead_task(self, lead_id):
     # ---------- CACHE CHECK ----------
     cache_key = f"lead_enrichment:v1:{lead.email}:{lead.company}"
 
-    cached_data = cache.get(cache_key)
+    try:
+        cached_data = cache.get(cache_key)
+    except Exception:
+        cached_data = None
 
     if cached_data:
         logger.info(f"⚡ Cache hit for lead {lead.id}")
@@ -157,10 +160,13 @@ Then a short summary paragraph.
     lead.generated_email = email_text
 
     # ---------- STORE IN CACHE ----------
-    cache.set(cache_key, {
-        "email": email_text,
-        "summary": summary
-    }, timeout=3600)
+    try:
+        cache.set(cache_key, {
+            "email": email_text,
+            "summary": summary
+        }, timeout=3600)
+    except Exception:
+        pass
 
     # ---------- EMAIL ----------
     try:
