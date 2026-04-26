@@ -63,7 +63,7 @@ jobs:
           docker push $IMAGE_NAME:${IMAGE_TAG}
           docker push $IMAGE_NAME:latest
 
-  # ================= K8s VALIDATION ================= #
+  # ================= k8s VALIDATION ================= #
   k8s-check:
     needs: build
     runs-on: ubuntu-latest
