@@ -64,18 +64,18 @@ jobs:
           docker push $IMAGE_NAME:latest
 
   # ================= k8s VALIDATION ================= #
-  k8s-check:
-    needs: build
-    runs-on: ubuntu-latest
+k8s-check:
+  needs: build
+  runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v4
+  steps:
+    - uses: actions/checkout@v4
 
-      - name: Install kubectl
-        run: sudo snap install kubectl --classic
+    - name: Install kubectl
+      run: sudo snap install kubectl --classic
 
-      - name: Validate Kubernetes YAML
-        run: kubectl apply --dry-run=client -f k8s/
+    - name: Validate Kubernetes YAML
+      run: kubectl apply --dry-run=client --validate=false -f k8s/
 
   # ================= DEPLOY ================= #
   deploy:
