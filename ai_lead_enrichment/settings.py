@@ -17,6 +17,7 @@ if IS_CI:
         }
     }
 else:
+
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.mysql",
