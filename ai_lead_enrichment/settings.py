@@ -1,7 +1,7 @@
 import os
 from datetime import timedelta
 from pathlib import Path
- 
+
 
 
 
@@ -23,7 +23,7 @@ else:
             "ENGINE": "django.db.backends.mysql",
             "NAME": os.getenv("MYSQL_DATABASE"),
             "USER": os.getenv("MYSQL_USER", "root"),
-            "PASSWORD": os.getenv("MYSQL_PASSWORD"),
+            "PASSWORD": os.environ["MYSQL_PASSWORD"],
             "HOST": os.getenv("MYSQL_HOST", "mysql"),
             "PORT": os.getenv("MYSQL_PORT", "3306"),
         }
