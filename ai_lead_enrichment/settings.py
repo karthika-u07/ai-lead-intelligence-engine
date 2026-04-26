@@ -1,9 +1,7 @@
-from dotenv import load_dotenv
 import os
 from datetime import timedelta
 from pathlib import Path
 
-load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 IS_CI = os.environ.get("CI") == "true"
