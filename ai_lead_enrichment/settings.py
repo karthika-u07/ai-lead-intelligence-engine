@@ -22,7 +22,7 @@ else:
             "ENGINE": "django.db.backends.mysql",
             "NAME": os.getenv("MYSQL_DATABASE"),
             "USER": os.getenv("MYSQL_USER", "root"),
-            "PASSWORD": os.getenv("MYSQL_ROOT_PASSWORD"),
+            "PASSWORD": os.getenv("MYSQL_PASSWORD"),
             "HOST": os.getenv("MYSQL_HOST", "mysql"),
             "PORT": os.getenv("MYSQL_PORT", "3306"),
         }
@@ -80,6 +80,7 @@ ALLOWED_HOSTS = ["*"]
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost",
     "http://localhost:8080",
+    "http://3.110.81.159",
 ]
 USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
