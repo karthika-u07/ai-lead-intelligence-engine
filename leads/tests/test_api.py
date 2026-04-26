@@ -1,5 +1,6 @@
 import pytest
 from leads.models import Lead
+import uuid
 
 
 # ---------------- CREATE ---------------- #
@@ -51,10 +52,11 @@ def test_missing_idempotency_key(client, auth_token):
 
 @pytest.mark.django_db
 def test_idempotency(client, auth_token):
+    unique_email = f"{uuid.uuid4()}@gmail.com"
     data = {
         "name": "John",
         "company": "Google",
-        "email": "john4@gmail.com"
+        "email": unique_email
     }
 
     headers = {
@@ -64,6 +66,11 @@ def test_idempotency(client, auth_token):
 
     r1 = client.post("/api/leads/", data, **headers)
     r2 = client.post("/api/leads/", data, **headers)
+    assert r1.status_code in [200, 201]
+    assert r2.status_code == 200
+
+    assert "id" in r1.data
+    assert "id" in r2.data
 
     assert r1.data["id"] == r2.data["id"]
     assert Lead.objects.count() == 1
