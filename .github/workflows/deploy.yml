@@ -75,7 +75,7 @@ jobs:
         run: sudo snap install kubectl --classic
 
       - name: Validate Kubernetes YAML
-        run: kubectl apply --dry-run=client --validate=false -f k8s/
+        run: kubectl kustomize k8s/ > /dev/null
 
   # ================= DEPLOY ================= #
   deploy:
