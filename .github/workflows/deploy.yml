@@ -1,4 +1,4 @@
-name: CI + CD Pipeline (Kubernetes)
+name: CI + CD Pipeline (Hybrid: K8s + Docker)
 
 on:
   push:
@@ -43,9 +43,8 @@ jobs:
         run: |
           pytest --cov=leads --maxfail=1 -q
 
-
-  # ================= CD ================= #
-  deploy:
+  # ================= BUILD ================= #
+  build:
     needs: test
     runs-on: ubuntu-latest
 
@@ -53,28 +52,46 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # Create IMAGE TAG
       - name: Set Image Tag
         run: echo "IMAGE_TAG=${GITHUB_SHA::7}" >> $GITHUB_ENV
 
-      #  Login DockerHub
       - name: Login to DockerHub
         run: |
           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-      # Build Image
       - name: Build Docker Image
         run: |
           docker build -t $IMAGE_NAME:${IMAGE_TAG} -t $IMAGE_NAME:latest .
 
-      #  Push Image
       - name: Push Docker Image
         run: |
           docker push $IMAGE_NAME:${IMAGE_TAG}
           docker push $IMAGE_NAME:latest
 
-      # Deploy to Kubernetes
-      - name: Deploy to EC2 (K8s)
+  # ================= K8s VALIDATION ================= #
+  k8s-check:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install kubectl
+        run: |
+          sudo snap install kubectl --classic
+
+      - name: Validate Kubernetes YAML
+        run: |
+          kubectl apply --dry-run=client -f k8s/
+
+  # ================= DEPLOY (REAL) ================= #
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to EC2 (Docker Compose)
         uses: appleboy/ssh-action@v0.1.10
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -83,19 +100,9 @@ jobs:
           script: |
             cd ai-lead-intelligence-engine
 
-            kubectl apply -f k8s/
+            git pull origin main
 
-            # IMPORTANT: update image dynamically
-            kubectl set image deployment/django-app django=$IMAGE_NAME:${IMAGE_TAG}
-            kubectl set image deployment/celery-worker worker=$IMAGE_NAME:${IMAGE_TAG}
+            docker-compose down
+            docker-compose up -d --build
 
-            #  restart
-            kubectl rollout restart deployment django-app
-            kubectl rollout restart deployment celery-worker
-
-            # check rollout
-            kubectl rollout status deployment django-app
-            kubectl rollout status deployment celery-worker
-
-            #  debug
-            kubectl get pods
+            docker ps
