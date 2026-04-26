@@ -4,9 +4,10 @@ metadata:
   name: app-config
 data:
   DEBUG: "False"
-  ALLOWED_HOSTS: "localhost,127.0.0.1"
+  ALLOWED_HOSTS: "*"
   REDIS_URL: "redis://redis:6379/0"
   MYSQL_DATABASE: "ai_leads_db"
   MYSQL_USER: "root"
   MYSQL_HOST: "mysql"
   MYSQL_PORT: "3306"
+  CSRF_TRUSTED_ORIGINS: "http://localhost:8080,http://127.0.0.1:8080"

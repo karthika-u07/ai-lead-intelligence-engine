@@ -16,3 +16,8 @@ spec:
       - name: worker
         image: karthikakutty/ai-leads:latest
         command: ["celery", "-A", "ai_lead_enrichment", "worker", "-l", "info"]
+        envFrom:
+          - configMapRef:
+              name: app-config
+          - secretRef:
+              name: app-secrets

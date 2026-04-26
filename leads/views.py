@@ -2,13 +2,14 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
-from django.db import transaction
-from .tasks import enrich_lead_task
-from .models import Lead
-from .serializers import LeadSerializer
+from django.db import transaction,IntegrityError
 from django.http import HttpResponse
 from rest_framework.generics import RetrieveAPIView, ListAPIView
 from rest_framework.permissions import AllowAny
+from .tasks import enrich_lead_task
+from .models import Lead
+from .serializers import LeadSerializer
+
 def home(request):
     return HttpResponse("AI Lead Intelligence Engine running on AWS 🚀 CI/CD working")
 class LeadCreateAPIView(APIView):
@@ -27,28 +28,36 @@ class LeadCreateAPIView(APIView):
                 status=400
             )
 
-        # FIRST: check idempotency key
-        existing = Lead.objects.filter(idempotency_key=idempotency_key).first()
-
-        if existing:
-            return Response(
-                LeadSerializer(existing).data,
-                status=200
-            )
-
-        # THEN validate serializer
+        #  Step 1: Validate request data FIRST
         serializer = LeadSerializer(data=request.data)
 
-        if serializer.is_valid():
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=400)
+
+        #  Step 2: Try saving (handles race condition)
+        try:
             lead = serializer.save(idempotency_key=idempotency_key)
 
-            enrich_lead_task.delay(lead.id)
+        except IntegrityError:
+            existing = Lead.objects.filter(
+                idempotency_key=idempotency_key
+            ).first()
 
+            if existing:
+                return Response(LeadSerializer(existing).data, status=200)
+
+            # fallback (very rare)
             return Response(
+                {"error": "Duplicate request conflict"},
+                status=409)
+
+        # Step 3: Async processing
+        enrich_lead_task.delay(lead.id)
+
+        return Response(
                 LeadSerializer(lead).data,
                 status=status.HTTP_201_CREATED
             )
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class LeadDetailAPIView(RetrieveAPIView):
     queryset = Lead.objects.all()

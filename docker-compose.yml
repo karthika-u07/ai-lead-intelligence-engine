@@ -1,4 +1,3 @@
-version: '3.9'
 services:
   web:
     build: .
@@ -33,9 +32,10 @@ services:
     env_file:
       - .env
     depends_on:
-      - redis
       - db
+      - redis
     restart: always
+
   redis:
     image: redis:7
     restart: always
@@ -44,14 +44,12 @@ services:
     image: mysql:8
     environment:
       MYSQL_DATABASE: ai_leads_db
-      MYSQL_ROOT_PASSWORD: "Laptop@123"
+      MYSQL_ROOT_PASSWORD: StrongPassword123
     ports:
       - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-    restart:  always
+    restart: always
 
 volumes:
   mysql_data:
-
-

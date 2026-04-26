@@ -15,6 +15,7 @@ spec:
       containers:
         - name: django
           image: karthikakutty/ai-leads:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8000
           envFrom:
