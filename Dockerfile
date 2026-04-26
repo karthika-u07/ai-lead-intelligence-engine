@@ -10,9 +10,4 @@ COPY requirements.txt .
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
 COPY . .
-
-CMD ["gunicorn", "ai_lead_enrichment.wsgi:application",
-     "--bind", "0.0.0.0:8000",
-     "--workers", "1",
-     "--timeout", "120",
-     "--threads", "2"]
+CMD ["gunicorn", "ai_lead_enrichment.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "1", "--timeout", "120", "--threads", "2"]
