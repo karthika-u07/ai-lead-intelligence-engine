@@ -1,16 +1,37 @@
+version: "3.9"
+
 services:
+
   web:
     build: .
     command: gunicorn ai_lead_enrichment.wsgi:application --bind 0.0.0.0:8000
-    volumes:
-      - .:/app
     ports:
       - "8000:8000"
     restart: always
-    env_file:
-      - .env
+
+    environment:
+      MYSQL_DATABASE: ai_leads_db
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: Strongpassword123
+      MYSQL_HOST: ai-lead-db.cjaqiiema1tl.ap-south-1.rds.amazonaws.com
+      MYSQL_PORT: 3306
+
     depends_on:
-      - db
+      - redis
+
+  worker:
+    build: .
+    command: celery -A ai_lead_enrichment worker -l info
+    restart: always
+
+    environment:
+      MYSQL_DATABASE: ai_leads_db
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: Strongpassword123
+      MYSQL_HOST: ai-lead-db.cjaqiiema1tl.ap-south-1.rds.amazonaws.com
+      MYSQL_PORT: 3306
+
+    depends_on:
       - redis
 
   nginx:
@@ -24,32 +45,6 @@ services:
     depends_on:
       - web
 
-  worker:
-    build: .
-    command: celery -A ai_lead_enrichment worker -l info
-    volumes:
-      - .:/app
-    env_file:
-      - .env
-    depends_on:
-      - db
-      - redis
-    restart: always
-
   redis:
     image: redis:7
     restart: always
-
-  db:
-    image: mysql:8
-    environment:
-      MYSQL_DATABASE: ai_leads_db
-      MYSQL_ROOT_PASSWORD: StrongPassword123
-    ports:
-      - "3307:3306"
-    volumes:
-      - mysql_data:/var/lib/mysql
-    restart: always
-
-volumes:
-  mysql_data:
